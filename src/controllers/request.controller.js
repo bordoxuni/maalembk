@@ -32,8 +32,8 @@ const createRequest = async (req, res, next) => {
       return res.status(400).json({ message: 'Catégorie introuvable' });
     }
 
-    // Handle multiple image uploads
-    const images = req.files ? req.files.map(file => `/uploads/requests/${file.filename}`) : [];
+    // CloudinaryStorage sets file.path to the hosted URL
+    const images = req.files ? req.files.map((file) => file.path) : [];
 
     const newRequest = await prisma.request.create({
       data: {

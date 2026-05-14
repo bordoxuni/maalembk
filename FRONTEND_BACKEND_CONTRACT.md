@@ -438,7 +438,7 @@ Returns the created request with `ServiceCategory` and `images` included.
   "latitude": 33.5731,
   "longitude": -7.5898,
   "addressText": "Casablanca, Morocco",
-  "images": ["/uploads/requests/1234567890-123.jpg", "/uploads/requests/1234567891-456.jpg"],
+  "images": ["https://res.cloudinary.com/<cloud>/image/upload/...jpg", "https://res.cloudinary.com/<cloud>/image/upload/...jpg"],
   "status": "OPEN",
   "createdAt": "2026-04-22T00:00:00.000Z",
   "updatedAt": "2026-04-22T00:00:00.000Z",
@@ -465,7 +465,7 @@ Returns the created request with `ServiceCategory` and `images` included.
 - Technicians in worker mode must not show the request creation flow.
 - Technicians in client mode can create requests with the same payload as clients.
 - Images must be sent as `multipart/form-data` with field name `images` (array).
-- Images are accessible at `http://backend:5001/uploads/requests/filename.ext`.
+- Images are stored remotely (Cloudinary) and returned as full hosted URLs.
 - The `images` field is returned as an array of file paths in all request responses.
 
 ---

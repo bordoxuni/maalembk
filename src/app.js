@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const path = require('path');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 
@@ -23,9 +22,6 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-
-// Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Disable caching to ensure fresh data from database
 app.use((req, res, next) => {

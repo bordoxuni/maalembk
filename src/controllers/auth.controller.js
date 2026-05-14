@@ -301,8 +301,8 @@ const updateProfilePicture = async (req, res, next) => {
       return res.status(400).json({ message: 'profilePicture file is required' });
     }
 
-    // Get the file path or URL (assuming you're storing files locally)
-    const profilePictureUrl = `/uploads/${req.file.filename}`;
+    // CloudinaryStorage sets file.path to the hosted URL
+    const profilePictureUrl = req.file.path;
 
     // Update User table first
     const updatedUser = await prisma.user.update({
