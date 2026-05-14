@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Offer {
+  id           Int         @id @default(autoincrement())
+  requestId    Int
+  technicianId Int
+  price        Float
+  message      String?
+  status       OfferStatus @default(PENDING)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  Request      Request     @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  User         User        @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  SelectedBy   Request[]   @relation("SelectedOffer")
+
+  @@index([requestId, status])
+  @@index([technicianId, status])
+}
+
+model Request {
+  id              Int             @id @default(autoincrement())
+  clientId        Int
+  categoryId      Int
+  title           String
+  description     String
+  budget          Float
+  latitude        Float
+  longitude       Float
+  addressText     String?
+  images          String[]
+  status          RequestStatus   @default(OPEN)
+  usedFreeQuota   Boolean         @default(false)
+  selectedOfferId Int?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  Offer           Offer[]
+  SelectedOffer   Offer?          @relation("SelectedOffer", fields: [selectedOfferId], references: [id])
+  ServiceCategory ServiceCategory @relation(fields: [categoryId], references: [id])
+  User            User            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  Review          Review[]
+  PlatformFee     PlatformFee[]
+
+  @@index([clientId, status, createdAt])
+}
+
+model Review {
+  id                               Int      @id @default(autoincrement())
+  requestId                        Int
+  reviewerId                       Int
+  reviewedUserId                   Int
+  rating                           Int
+  comment                          String?
+  createdAt                        DateTime @default(now())
+  Request                          Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  User_Review_reviewedUserIdToUser User     @relation("Review_reviewedUserIdToUser", fields: [reviewedUserId], references: [id], onDelete: Cascade)
+  User_Review_reviewerIdToUser     User     @relation("Review_reviewerIdToUser", fields: [reviewerId], references: [id], onDelete: Cascade)
+
+  @@index([requestId, reviewerId])
+  @@index([reviewedUserId, createdAt])
+}
+
+model PlatformFee {
+  id           Int      @id @default(autoincrement())
+  requestId    Int      @unique
+  offerId      Int      @unique
+  originalPrice Float
+  feeAmount    Float
+  netAmount    Float
+  feePercentage Float   @default(0.10)
+  createdAt    DateTime @default(now())
+  Request      Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+}
+
+model ServiceCategory {
+  id                 Int                  @id @default(autoincrement())
+  name               String               @unique
+  description        String?
+  Request            Request[]
+  TechnicianCategory TechnicianCategory[]
+}
+
+model TechnicianCategory {
+  id                Int               @id @default(autoincrement())
+  technicianId      Int
+  categoryId        Int
+  ServiceCategory   ServiceCategory   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  TechnicianProfile TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+
+  @@unique([technicianId, categoryId])
+}
+
+model TechnicianProfile {
+  id                 Int                  @id @default(autoincrement())
+  userId             Int                  @unique
+  bio                String?
+  profilePicture     String?
+  skillsText         String?
+  radiusKm           Float                @default(10)
+  latitude           Float?
+  longitude          Float?
+  averageRating      Float                @default(0)
+  sold               Int                  @default(0)
+  freeMissionCount   Int                  @default(0)
+  freeMissionMonth   Int?
+  freeMissionYear    Int?
+  isVerified         Boolean              @default(false)
+  isAvailable        Boolean              @default(true)
+  isWorkerMode       Boolean              @default(true)
+  TechnicianCategory TechnicianCategory[]
+  User               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id                                 Int                @id @default(autoincrement())
+  fullName                           String
+  profilePicture                     String?
+  email                              String             @unique
+  phone                              String?
+  passwordHash                       String
+  role                               UserRole
+  averageRating                      Float              @default(0)
+  createdAt                          DateTime           @default(now())
+  updatedAt                          DateTime           @updatedAt
+  Offer                              Offer[]
+  Request                            Request[]
+  Review_Review_reviewedUserIdToUser Review[]           @relation("Review_reviewedUserIdToUser")
+  Review_Review_reviewerIdToUser     Review[]           @relation("Review_reviewerIdToUser")
+  TechnicianProfile                  TechnicianProfile?
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REFUSED
+  CANCELLED
+  DONE
+}
+
+enum RequestStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum UserRole {
+  CLIENT
+  TECHNICIAN
+  ADMIN
+}
