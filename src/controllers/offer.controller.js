@@ -236,7 +236,7 @@ const acceptOffer = async (req, res, next) => {
             id: true,
             fullName: true,
             email: true,
-            technicianProfile: true,
+            TechnicianProfile: true,
           },
         },
       },
@@ -256,7 +256,7 @@ const acceptOffer = async (req, res, next) => {
 
     // Get technician profile
     const technician = offer.User;
-    const profile = technician.technicianProfile;
+    const profile = technician.TechnicianProfile;
 
     if (!profile) {
       return res.status(404).json({ message: 'Profil technicien introuvable' });
