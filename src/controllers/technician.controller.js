@@ -1,6 +1,4 @@
 const prisma = require('../config/prisma');
-const FormData = require('form-data');
-const axios = require('axios');
 const fs = require('fs');
 const { getSocketIO } = require('../utils/socketHelper');
 
@@ -256,47 +254,21 @@ const verifyIdentity = async (req, res, next) => {
       return res.status(400).json({ message: 'Both idImage and selfie files are required' });
     }
 
-    // Read files into buffers for reliable form-data serialization
-    const idImageBuffer = fs.readFileSync(idImage[0].path);
-    const selfieBuffer = fs.readFileSync(selfie[0].path);
+    // Simulation mode: do not rely on an external verification service.
+    // As soon as both images are uploaded, we mark the technician as verified.
+    const isVerified = true;
+    const confidence = 1;
 
-    // Create form data to send to verification service
-    const formData = new FormData();
-    formData.append('id_image', idImageBuffer, {
-      filename: idImage[0].originalname,
-      contentType: idImage[0].mimetype,
-    });
-    formData.append('selfie', selfieBuffer, {
-      filename: selfie[0].originalname,
-      contentType: selfie[0].mimetype,
-    });
-
-    // Call verification service
-    const response = await axios.post('http://127.0.0.1:8000/verify', formData, {
-      headers: {
-        ...formData.getHeaders(),
-      },
-    });
-
-    const { verified, confidence } = response.data;
-    
-    // Decision logic
-    const isVerified = verified === true && confidence > 0.20;
-
-    // Update technician profile
-    await prisma.technicianProfile.update({
+    await prisma.technicianProfile.upsert({
       where: { userId: req.user.id },
-      data: {
-        isVerified: isVerified,
-      },
+      update: { isVerified },
+      create: { userId: req.user.id, isVerified },
     });
 
     res.json({
       verified: isVerified,
       confidence: confidence,
-      message: isVerified 
-        ? 'Identity verified successfully' 
-        : 'Identity verification failed',
+      message: 'Identity verified (simulated)',
     });
 
     // Clean up temporary uploaded files
@@ -317,9 +289,6 @@ const verifyIdentity = async (req, res, next) => {
       try { fs.unlinkSync(selfieFile.path); } catch (e) {}
     }
 
-    if (error.code === 'ECONNREFUSED') {
-      return res.status(500).json({ message: 'Verification service unavailable' });
-    }
     next(error);
   }
 };
